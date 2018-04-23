@@ -12,7 +12,6 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
-from keras.models import load_model
 import utils
 
 sio = socketio.Server()
