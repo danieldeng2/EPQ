@@ -61,6 +61,7 @@ def main():
         num_epochs=1,
         shuffle=False)
     eval_results = steering_predictor.evaluate(input_fn=eval_input_fn)
+    #print for evaluation
     print(eval_results)
 
 
