@@ -13,11 +13,11 @@ def load_image(path):
     image = Image.open(path.strip())
     # Normalize the image pixels to range -1 to 1.
     image = np.array(image, np.float32)
-    image /= 127.5
-    image -= 1.
+    #image /= 127.5
+    #image -= 1.
     # Slice off the top and bottom pixels to remove the sky
     image = image[40:130, :]
-    return image    
+    return image
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,8 +70,8 @@ def main():
 
 
 
-    
-    
+
+
 
 
 
