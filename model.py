@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 CSV_COLUMN_NAMES = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed']
 
 def cnn_model_fn(features, labels, mode):
+    return
 
 
 
@@ -13,11 +14,11 @@ def load_image(path):
     image = Image.open(path.strip())
     # Normalize the image pixels to range -1 to 1.
     image = np.array(image, np.float32)
-    image /= 127.5
-    image -= 1.
+    #image /= 127.5
+    #image -= 1.
     # Slice off the top and bottom pixels to remove the sky
     image = image[40:130, :]
-    return image    
+    return image
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,8 +71,8 @@ def main():
 
 
 
-    
-    
+
+
 
 
 
