@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 import argparse
 import os
 from sklearn.model_selection import train_test_split
@@ -37,7 +38,6 @@ def main():
         center_image = load_image(images.iloc[i]['Center'])
         #left_image = load_image(images.iloc[i]['Left'])
         #right_image = load_image(images.iloc[i]['Right'])
-
         center_images.append(center_image)
         #left_images.append(left_image)
         #right_images.append(right_image)
