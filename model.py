@@ -10,27 +10,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 tf.logging.set_verbosity(tf.logging.INFO)
-
-#Read the images and load the data.
-driving_sample = pd.read_csv("~/Documents/EPQ/track1_1/driving_log.csv", sep="," , names = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed'])
-print(driving_sample.describe())
-image_data = []
-for index, row in driving_sample.iterrows():
-    image_data.append(cv2.resize(cv2.cvtColor(cv2.imread (row["Center"])[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA))
-    print("loaded: " + row["Center"])
-print('image_data shape:', np.array(image_data).shape)
-
-train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data), driving_sample['Steering'].values, test_size=0.2, random_state=0)
-
-for i in range(1,len(train_images)):
-    train_images[i] = train_images[i]/127.5-1.0
-for i in range(1,len(test_images)):
-    test_images[i] = test_images[i]/127.5-1.0
-# plt.imshow(train_images[0])
-# plt.show()
-print('train_images shape: ', train_images.shape)
-print('train_labels shape: ', train_labels.shape)
-
 def cnn_model_fn(features, labels, mode):
     input_layer = tf.reshape(tf.cast(features["x"], tf.float32), [-1, 66, 200, 3])
 
@@ -41,9 +20,7 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[5, 5],
         padding="valid",
         activation=tf.nn.elu)
-    print(conv1)
     pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-    print(pool1)
     # Convolutional Layer #2 & Pooling Layer #2
     conv2 = tf.layers.conv2d(
         inputs=pool1,
@@ -51,9 +28,7 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[5, 5],
         padding="valid",
         activation=tf.nn.elu)
-    print(conv2)
     pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
-    print(pool2)
     # Convolutional Layer #3 & Pooling Layer #3
     conv3 = tf.layers.conv2d(
         inputs=pool2,
@@ -61,9 +36,7 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[5, 5],
         padding="valid",
         activation=tf.nn.elu)
-    print(conv3)
     pool3 = tf.layers.max_pooling2d(inputs=conv3, pool_size=[2, 2], strides=2)
-    print(pool3)
     # Convolutional Layer #4
     conv4 = tf.layers.conv2d(
         inputs=pool3,
@@ -71,7 +44,6 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[3, 3],
         padding="valid",
         activation=tf.nn.elu)
-    print(conv4)
     # Convolutional Layer #5
     conv5 = tf.layers.conv2d(
         inputs=conv4,
@@ -79,10 +51,8 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[3, 3],
         padding="same",
         activation=tf.nn.elu)
-    print(conv5)
     dropout = tf.layers.dropout(
         inputs=conv5, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
-    print(dropout)
     dropout_flat = tf.reshape(dropout, [-1, 1216])
     dense1 = tf.layers.dense(inputs=dropout_flat, units=100, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
@@ -98,7 +68,7 @@ def cnn_model_fn(features, labels, mode):
     print("result: ", result)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.0001)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
@@ -110,30 +80,56 @@ def cnn_model_fn(features, labels, mode):
     return tf.estimator.EstimatorSpec(
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
-# Create the Estimator
-mnist_classifier = tf.estimator.Estimator(
-    model_fn=cnn_model_fn, model_dir="/home/daniel/Documents/EPQ/Behaviour-cloning-model")
+if __name__ == '__main__':
+    for track_n in range(1, 3):
+        for try_n in range(1, 6):
+            #Read the images and load the data.
+            file_dir = "/home/daniel/Documents/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
+            print("file_dir: " + file_dir)
+            driving_sample = pd.read_csv(file_dir, sep="," , names = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed'])
+            print(driving_sample.describe())
+            image_data = []
+            for index, row in driving_sample.iterrows():
+                image_data.append(cv2.resize(cv2.cvtColor(cv2.imread(row["Center"])[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA))
+                print("loaded: " + row["Center"])
+            print('image_data shape:', np.array(image_data).shape)
 
-# logging_hook = tf.train.LoggingTensorHook(
-#          tensors=loss, every_n_iter=50)
-# Train the model
-train_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={"x": train_images},
-    y=train_labels,
-    batch_size=1,
-    num_epochs=5,
-    shuffle=True)
-mnist_classifier.train(
-    input_fn=train_input_fn,
-    steps=20000
-    # ,hooks=[logging_hook]
-    )
+            train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data), driving_sample['Steering'].values, test_size=0.2, random_state=0)
 
-# Evaluate the model and print results
-eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-    x={"x": test_images},
-    y=test_labels,
-    num_epochs=1,
-    shuffle=False)
-eval_results = mnist_classifier.evaluate(input_fn=eval_input_fn)
-print(eval_results)
+            for i in range(1,len(train_images)):
+                train_images[i] = train_images[i]/127.5-1.0
+            for i in range(1,len(test_images)):
+                test_images[i] = test_images[i]/127.5-1.0
+            # plt.imshow(train_images[0])
+            # plt.show()
+            print('train_images shape: ', train_images.shape)
+            print('train_labels shape: ', train_labels.shape)
+            # Create the Estimator
+            behaviour_regressor = tf.estimator.Estimator(
+                model_fn=cnn_model_fn, model_dir="/home/daniel/Documents/EPQ/Behaviour-cloning-model")
+
+            # logging_hook = tf.train.LoggingTensorHook(
+            #          tensors=loss, every_n_iter=50)
+            # Train the model
+            train_input_fn = tf.estimator.inputs.numpy_input_fn(
+                x={"x": train_images},
+                y=train_labels,
+                batch_size=1,
+                num_epochs=50,
+                shuffle=True)
+            behaviour_regressor.train(
+                input_fn=train_input_fn,
+                steps=20000
+                # ,hooks=[logging_hook]
+                )
+
+            # Evaluate the model and print results
+            eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+                x={"x": test_images},
+                y=test_labels,
+                batch_size=1,
+                num_epochs=1,
+                shuffle=False)
+            eval_results = behaviour_regressor.evaluate(input_fn=eval_input_fn)
+            print(eval_results)
+            print("trained with track ", track_n, "try ", try_n)

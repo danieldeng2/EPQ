@@ -3,7 +3,6 @@ import base64
 from datetime import datetime
 import os
 import shutil
-
 import numpy as np
 import socketio
 import eventlet
@@ -11,9 +10,11 @@ import eventlet.wsgi
 from PIL import Image
 from flask import Flask
 from io import BytesIO
-
-import utils
-
+import tensorflow as tf
+import pandas as pd
+import cv2
+import matplotlib.pyplot as plt
+from model import cnn_model_fn
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -29,13 +30,23 @@ speed_limit = MAX_SPEED
 def telemetry(sid, data):
     if data:
         speed = float(data["speed"])
-        image = Image.open(BytesIO(base64.b64decode(data["image"])))
+        image = Image.open(BytesIO(base64.b64decode(data["image"]))).convert('RGB')
+
         try:
             image = np.asarray(image)
-            image = utils.preprocess(image)
+            image = image[:, :, ::-1].copy()
+            image = cv2.resize(cv2.cvtColor(image[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA)
             image = np.array([image])
 
-            steering_angle = float(model.predict(image, batch_size=1))
+
+            predict_input_fn = tf.estimator.inputs.numpy_input_fn(
+                x={"x": image},
+                batch_size=1,
+                shuffle=False)
+            result = behaviour_regressor.predict(input_fn=predict_input_fn)
+
+            print(next(result))
+            steering_angle = next(result)
 
             global speed_limit
             speed_limit = MIN_SPEED if speed > speed_limit else MAX_SPEED
@@ -56,10 +67,6 @@ def connect(sid, environ):
     send_control(0, 0)
 
 
-def load_model(model):
-    return
-
-
 def send_control(steering_angle, throttle):
     sio.emit(
         "steer",
@@ -67,10 +74,9 @@ def send_control(steering_angle, throttle):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Remote Driving')
-    parser.add_argument('model', type=str)
-    args = parser.parse_args()
 
-    model = load_model(args.model)
+    behaviour_regressor = tf.estimator.Estimator(
+        model_fn=cnn_model_fn, model_dir="/home/daniel/Documents/EPQ/Behaviour-cloning-model")
+
     app = socketio.Middleware(sio, app)
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
