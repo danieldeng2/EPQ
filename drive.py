@@ -37,7 +37,10 @@ def telemetry(sid, data):
             image = image[:, :, ::-1].copy()
             image = cv2.resize(cv2.cvtColor(image[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA)
             image = np.array([image])
-
+            image = image/127.5-1.0
+            # print(image.shape)
+            # plt.imshow(image[0])
+            # plt.show()
 
             predict_input_fn = tf.estimator.inputs.numpy_input_fn(
                 x={"x": image},
@@ -46,7 +49,7 @@ def telemetry(sid, data):
             result = behaviour_regressor.predict(input_fn=predict_input_fn)
 
             print(next(result))
-            steering_angle = next(result)
+            steering_angle = next(result) - 0.02
 
             global speed_limit
             speed_limit = MIN_SPEED if speed > speed_limit else MAX_SPEED

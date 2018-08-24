@@ -57,15 +57,12 @@ def cnn_model_fn(features, labels, mode):
     dense1 = tf.layers.dense(inputs=dropout_flat, units=100, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
     dense3 = tf.layers.dense(inputs=dense2, units=10, activation=tf.nn.elu)
-    dense4 = tf.layers.dense(inputs=dense3, units=1, activation=tf.nn.elu)
-    result = tf.reshape(dense4, [-1,])
+    dense4 = tf.layers.dense(inputs=dense3, units=1)
+    result = tf.reshape(dense4, [-1])
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=result)
 
-    loss = tf.losses.mean_squared_error(labels,result)
-
-    print("Loss: ", loss)
-    print("result: ", result)
+    loss = tf.losses.mean_squared_error(labels=labels,predictions=result)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.0001)
@@ -81,7 +78,7 @@ def cnn_model_fn(features, labels, mode):
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 if __name__ == '__main__':
-    for track_n in range(1, 3):
+    for track_n in range(1, 2):
         for try_n in range(1, 6):
             #Read the images and load the data.
             file_dir = "/home/daniel/Documents/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
@@ -94,7 +91,7 @@ if __name__ == '__main__':
                 print("loaded: " + row["Center"])
             print('image_data shape:', np.array(image_data).shape)
 
-            train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data), driving_sample['Steering'].values, test_size=0.2, random_state=0)
+            train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data),np.array(driving_sample['Steering'].values, dtype=np.float32), test_size=0.2, random_state=0)
 
             for i in range(1,len(train_images)):
                 train_images[i] = train_images[i]/127.5-1.0

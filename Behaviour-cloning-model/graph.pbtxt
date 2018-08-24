@@ -175,7 +175,7 @@ node {
     value {
       list {
         type: DT_INT64
-        type: DT_DOUBLE
+        type: DT_FLOAT
         type: DT_UINT8
       }
     }
@@ -278,7 +278,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_FLOAT
     }
   }
   attr {
@@ -330,7 +330,7 @@ node {
     value {
       list {
         type: DT_INT64
-        type: DT_DOUBLE
+        type: DT_FLOAT
         type: DT_UINT8
       }
     }
@@ -646,7 +646,7 @@ node {
         dtype: DT_INT32
         tensor_shape {
         }
-        int_val: 1
+        int_val: 20
       }
     }
   }
@@ -693,7 +693,7 @@ node {
     value {
       list {
         type: DT_INT64
-        type: DT_DOUBLE
+        type: DT_FLOAT
         type: DT_UINT8
       }
     }
@@ -8303,32 +8303,6 @@ node {
   }
 }
 node {
-  name: "dense_4/Elu"
-  op: "Elu"
-  input: "dense_4/BiasAdd"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
   name: "Reshape_2/shape"
   op: "Const"
   attr {
@@ -8367,7 +8341,7 @@ node {
 node {
   name: "Reshape_2"
   op: "Reshape"
-  input: "dense_4/Elu"
+  input: "dense_4/BiasAdd"
   input: "Reshape_2/shape"
   attr {
     key: "T"
@@ -8395,39 +8369,10 @@ node {
   }
 }
 node {
-  name: "mean_squared_error/ToFloat_1"
-  op: "Cast"
-  input: "random_shuffle_queue_DequeueUpTo:1"
-  attr {
-    key: "DstT"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "SrcT"
-    value {
-      type: DT_DOUBLE
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-        }
-      }
-    }
-  }
-}
-node {
   name: "mean_squared_error/Sub"
   op: "Sub"
   input: "Reshape_2"
-  input: "mean_squared_error/ToFloat_1"
+  input: "random_shuffle_queue_DequeueUpTo:1"
   attr {
     key: "T"
     value {
@@ -11522,7 +11467,7 @@ node {
 node {
   name: "gradients/mean_squared_error/Sub_grad/Shape_1"
   op: "Shape"
-  input: "mean_squared_error/ToFloat_1"
+  input: "random_shuffle_queue_DequeueUpTo:1"
   attr {
     key: "T"
     value {
@@ -11799,7 +11744,7 @@ node {
 node {
   name: "gradients/Reshape_2_grad/Shape"
   op: "Shape"
-  input: "dense_4/Elu"
+  input: "dense_4/BiasAdd"
   attr {
     key: "T"
     value {
@@ -11859,36 +11804,9 @@ node {
   }
 }
 node {
-  name: "gradients/dense_4/Elu_grad/EluGrad"
-  op: "EluGrad"
-  input: "gradients/Reshape_2_grad/Reshape"
-  input: "dense_4/Elu"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
   name: "gradients/dense_4/BiasAdd_grad/BiasAddGrad"
   op: "BiasAddGrad"
-  input: "gradients/dense_4/Elu_grad/EluGrad"
+  input: "gradients/Reshape_2_grad/Reshape"
   attr {
     key: "T"
     value {
@@ -11917,13 +11835,13 @@ node {
 node {
   name: "gradients/dense_4/BiasAdd_grad/tuple/group_deps"
   op: "NoOp"
-  input: "^gradients/dense_4/Elu_grad/EluGrad"
+  input: "^gradients/Reshape_2_grad/Reshape"
   input: "^gradients/dense_4/BiasAdd_grad/BiasAddGrad"
 }
 node {
   name: "gradients/dense_4/BiasAdd_grad/tuple/control_dependency"
   op: "Identity"
-  input: "gradients/dense_4/Elu_grad/EluGrad"
+  input: "gradients/Reshape_2_grad/Reshape"
   input: "^gradients/dense_4/BiasAdd_grad/tuple/group_deps"
   attr {
     key: "T"
@@ -11935,7 +11853,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@gradients/dense_4/Elu_grad/EluGrad"
+        s: "loc:@gradients/Reshape_2_grad/Reshape"
       }
     }
   }
@@ -20163,7 +20081,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
         }
-        string_val: "_temp_6727f3a2e48a4f93bc6e9e207c357dd9/part"
+        string_val: "_temp_b286a16962144004b0f93b335360dea5/part"
       }
     }
   }
