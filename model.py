@@ -4,7 +4,6 @@ import keras
 import pandas as pd
 from PIL import Image
 import cv2
-#from scipy.misc import imread
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
