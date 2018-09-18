@@ -77,10 +77,10 @@ def cnn_model_fn(features, labels, mode):
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 if __name__ == '__main__':
-    for track_n in range(1, 2):
+    for track_n in range(1, 3):
         for try_n in range(1, 6):
             #Read the images and load the data.
-            file_dir = "/home/daniel/Documents/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
+            file_dir = "/home/daniel/Projects/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
             print("file_dir: " + file_dir)
             driving_sample = pd.read_csv(file_dir, sep="," , names = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed'])
             print(driving_sample.describe())
@@ -102,7 +102,7 @@ if __name__ == '__main__':
             print('train_labels shape: ', train_labels.shape)
             # Create the Estimator
             behaviour_regressor = tf.estimator.Estimator(
-                model_fn=cnn_model_fn, model_dir="/home/daniel/Documents/EPQ/Behaviour-cloning-model")
+                model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
 
             # logging_hook = tf.train.LoggingTensorHook(
             #          tensors=loss, every_n_iter=50)

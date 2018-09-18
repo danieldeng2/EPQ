@@ -646,7 +646,7 @@ node {
         dtype: DT_INT32
         tensor_shape {
         }
-        int_val: 20
+        int_val: 1
       }
     }
   }
@@ -20081,7 +20081,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
         }
-        string_val: "_temp_b286a16962144004b0f93b335360dea5/part"
+        string_val: "_temp_18bab9f7c22c41aaa86653b06147aeeb/part"
       }
     }
   }
