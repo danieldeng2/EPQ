@@ -1,0 +1,2 @@
+conda install -c asmeurer pango
+conda install -c anaconda glib

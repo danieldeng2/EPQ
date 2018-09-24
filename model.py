@@ -51,7 +51,7 @@ def cnn_model_fn(features, labels, mode):
         padding="same",
         activation=tf.nn.elu)
     dropout = tf.layers.dropout(
-        inputs=conv5, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
+        inputs=conv5, rate=0.6, training=mode == tf.estimator.ModeKeys.TRAIN)
     dropout_flat = tf.reshape(dropout, [-1, 1216])
     dense1 = tf.layers.dense(inputs=dropout_flat, units=100, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                 shuffle=True)
             behaviour_regressor.train(
                 input_fn=train_input_fn,
-                steps=20000
+                steps=15000
                 # ,hooks=[logging_hook]
                 )
 
