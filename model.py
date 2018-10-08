@@ -57,7 +57,7 @@ def cnn_model_fn(features, labels, mode):
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
     dense3 = tf.layers.dense(inputs=dense2, units=10, activation=tf.nn.elu)
     dense4 = tf.layers.dense(inputs=dense3, units=1)
-    result = tf.reshape(dense4, [-1])
+    result = tf.reshape(dense4, [-1], name="result")
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=result)
 
@@ -104,8 +104,8 @@ if __name__ == '__main__':
             behaviour_regressor = tf.estimator.Estimator(
                 model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
 
-            # logging_hook = tf.train.LoggingTensorHook(
-            #          tensors=loss, every_n_iter=50)
+            logging_hook = tf.train.LoggingTensorHook(
+                     {"predictions" : "result"}, every_n_iter=50)
             # Train the model
             train_input_fn = tf.estimator.inputs.numpy_input_fn(
                 x={"x": train_images},
@@ -116,7 +116,7 @@ if __name__ == '__main__':
             behaviour_regressor.train(
                 input_fn=train_input_fn,
                 steps=15000
-                # ,hooks=[logging_hook]
+                 ,hooks=[logging_hook]
                 )
 
             # Evaluate the model and print results

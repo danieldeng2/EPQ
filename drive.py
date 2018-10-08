@@ -79,7 +79,7 @@ def send_control(steering_angle, throttle):
 if __name__ == '__main__':
 
     behaviour_regressor = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="/home/daniel/Documents/EPQ/Behaviour-cloning-model")
+        model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
 
     app = socketio.Middleware(sio, app)
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)

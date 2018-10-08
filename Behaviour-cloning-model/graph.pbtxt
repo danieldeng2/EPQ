@@ -5181,7 +5181,7 @@ node {
         dtype: DT_FLOAT
         tensor_shape {
         }
-        float_val: 0.5
+        float_val: 0.4000000059604645
       }
     }
   }
@@ -8303,7 +8303,7 @@ node {
   }
 }
 node {
-  name: "Reshape_2/shape"
+  name: "result/shape"
   op: "Const"
   attr {
     key: "_output_shapes"
@@ -8339,10 +8339,10 @@ node {
   }
 }
 node {
-  name: "Reshape_2"
+  name: "result"
   op: "Reshape"
   input: "dense_4/BiasAdd"
-  input: "Reshape_2/shape"
+  input: "result/shape"
   attr {
     key: "T"
     value {
@@ -8371,7 +8371,7 @@ node {
 node {
   name: "mean_squared_error/Sub"
   op: "Sub"
-  input: "Reshape_2"
+  input: "result"
   input: "random_shuffle_queue_DequeueUpTo:1"
   attr {
     key: "T"
@@ -11438,7 +11438,7 @@ node {
 node {
   name: "gradients/mean_squared_error/Sub_grad/Shape"
   op: "Shape"
-  input: "Reshape_2"
+  input: "result"
   attr {
     key: "T"
     value {
@@ -11742,7 +11742,7 @@ node {
   }
 }
 node {
-  name: "gradients/Reshape_2_grad/Shape"
+  name: "gradients/result_grad/Shape"
   op: "Shape"
   input: "dense_4/BiasAdd"
   attr {
@@ -11771,10 +11771,10 @@ node {
   }
 }
 node {
-  name: "gradients/Reshape_2_grad/Reshape"
+  name: "gradients/result_grad/Reshape"
   op: "Reshape"
   input: "gradients/mean_squared_error/Sub_grad/tuple/control_dependency"
-  input: "gradients/Reshape_2_grad/Shape"
+  input: "gradients/result_grad/Shape"
   attr {
     key: "T"
     value {
@@ -11806,7 +11806,7 @@ node {
 node {
   name: "gradients/dense_4/BiasAdd_grad/BiasAddGrad"
   op: "BiasAddGrad"
-  input: "gradients/Reshape_2_grad/Reshape"
+  input: "gradients/result_grad/Reshape"
   attr {
     key: "T"
     value {
@@ -11835,13 +11835,13 @@ node {
 node {
   name: "gradients/dense_4/BiasAdd_grad/tuple/group_deps"
   op: "NoOp"
-  input: "^gradients/Reshape_2_grad/Reshape"
+  input: "^gradients/result_grad/Reshape"
   input: "^gradients/dense_4/BiasAdd_grad/BiasAddGrad"
 }
 node {
   name: "gradients/dense_4/BiasAdd_grad/tuple/control_dependency"
   op: "Identity"
-  input: "gradients/Reshape_2_grad/Reshape"
+  input: "gradients/result_grad/Reshape"
   input: "^gradients/dense_4/BiasAdd_grad/tuple/group_deps"
   attr {
     key: "T"
@@ -11853,7 +11853,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@gradients/Reshape_2_grad/Reshape"
+        s: "loc:@gradients/result_grad/Reshape"
       }
     }
   }
@@ -20081,7 +20081,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
         }
-        string_val: "_temp_29932d00e99d415aa6852fc4536b16ae/part"
+        string_val: "_temp_1c41040eed3d417cbb096c0ca7bc5d41/part"
       }
     }
   }
