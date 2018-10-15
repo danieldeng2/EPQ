@@ -47,9 +47,8 @@ def telemetry(sid, data):
                 batch_size=1,
                 shuffle=False)
             result = behaviour_regressor.predict(input_fn=predict_input_fn)
-
             print(next(result))
-            steering_angle = next(result) - 0.02
+            steering_angle = next(result)
 
             global speed_limit
             speed_limit = MIN_SPEED if speed > speed_limit else MAX_SPEED

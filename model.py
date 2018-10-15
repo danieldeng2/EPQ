@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 tf.logging.set_verbosity(tf.logging.INFO)
 def cnn_model_fn(features, labels, mode):
     input_layer = tf.reshape(tf.cast(features["x"], tf.float32), [-1, 66, 200, 3])
-
     # Convolutional Layer #1 & Pooling Layer #1
     conv1 = tf.layers.conv2d(
         inputs=input_layer,
@@ -50,14 +49,14 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[3, 3],
         padding="same",
         activation=tf.nn.elu)
-    dropout = tf.layers.dropout(
-        inputs=conv5, rate=0.6, training=mode == tf.estimator.ModeKeys.TRAIN)
-    dropout_flat = tf.reshape(dropout, [-1, 1216])
+    dropout = tf.layers.dropout(inputs=conv5, rate=0.6, training=mode == tf.estimator.ModeKeys.TRAIN)
+    dropout_flat = tf.reshape(dropout, [-1, 2432])
     dense1 = tf.layers.dense(inputs=dropout_flat, units=100, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
     dense3 = tf.layers.dense(inputs=dense2, units=10, activation=tf.nn.elu)
     dense4 = tf.layers.dense(inputs=dense3, units=1)
     result = tf.reshape(dense4, [-1], name="result")
+
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=result)
 
@@ -103,20 +102,20 @@ if __name__ == '__main__':
             # Create the Estimator
             behaviour_regressor = tf.estimator.Estimator(
                 model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
-
+            tensors_to_log = {"result":"result"}
             logging_hook = tf.train.LoggingTensorHook(
-                     {"predictions" : "result"}, every_n_iter=50)
+                     tensors_to_log, every_n_iter=50)
             # Train the model
             train_input_fn = tf.estimator.inputs.numpy_input_fn(
                 x={"x": train_images},
                 y=train_labels,
-                batch_size=1,
+                batch_size=20,
                 num_epochs=50,
                 shuffle=True)
             behaviour_regressor.train(
                 input_fn=train_input_fn,
-                steps=15000
-                 ,hooks=[logging_hook]
+                steps=1500
+                 # ,hooks=[logging_hook]
                 )
 
             # Evaluate the model and print results
