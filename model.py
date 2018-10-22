@@ -49,21 +49,22 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[3, 3],
         padding="same",
         activation=tf.nn.elu)
-    dropout = tf.layers.dropout(inputs=conv5, rate=0.6, training=mode == tf.estimator.ModeKeys.TRAIN)
-    dropout_flat = tf.reshape(dropout, [-1, 2432])
-    dense1 = tf.layers.dense(inputs=dropout_flat, units=100, activation=tf.nn.elu)
+    dropout = tf.layers.dropout(inputs=conv5, rate=0.0, training=mode == tf.estimator.ModeKeys.TRAIN)
+    dropout_flat = tf.contrib.layers.flatten(dropout)
+    dense1 = tf.layers.dense(inputs=dropout_flat, units=500, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
     dense3 = tf.layers.dense(inputs=dense2, units=10, activation=tf.nn.elu)
     dense4 = tf.layers.dense(inputs=dense3, units=1)
-    result = tf.reshape(dense4, [-1], name="result")
+    result = tf.identity(dense4, name="result")
+    #result = tf.reshape(dense4, [-1], name="result")
 
     if mode == tf.estimator.ModeKeys.PREDICT:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=result)
-
+    tf.identity(labels, name="labels")
     loss = tf.losses.mean_squared_error(labels=labels,predictions=result)
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.0001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
@@ -76,55 +77,57 @@ def cnn_model_fn(features, labels, mode):
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 if __name__ == '__main__':
-    for track_n in range(1, 3):
+    image_data = []
+    steering_data = []
+    for track_n in range(1, 2):
         for try_n in range(1, 6):
             #Read the images and load the data.
             file_dir = "/home/daniel/Projects/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
             print("file_dir: " + file_dir)
             driving_sample = pd.read_csv(file_dir, sep="," , names = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed'])
             print(driving_sample.describe())
-            image_data = []
+
             for index, row in driving_sample.iterrows():
                 image_data.append(cv2.resize(cv2.cvtColor(cv2.imread(row["Center"])[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA))
-                print("loaded: " + row["Center"])
+                #image_data.append(cv2.resize(cv2.cvtColor(cv2.flip( cv2.imread(row["Center"]), 0)[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA)) #flipped image
+                steering_data.append(row["Steering"])
             print('image_data shape:', np.array(image_data).shape)
+    steering = np.reshape(steering_data, (-1, 1))
+    train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data),np.array(steering, dtype=np.float32), test_size=0.2, random_state=0)
 
-            train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data),np.array(driving_sample['Steering'].values, dtype=np.float32), test_size=0.2, random_state=0)
+    for i in range(1,len(train_images)):
+        train_images[i] = train_images[i]/127.5-1.0
+    for i in range(1,len(test_images)):
+        test_images[i] = test_images[i]/127.5-1.0
 
-            for i in range(1,len(train_images)):
-                train_images[i] = train_images[i]/127.5-1.0
-            for i in range(1,len(test_images)):
-                test_images[i] = test_images[i]/127.5-1.0
-            # plt.imshow(train_images[0])
-            # plt.show()
-            print('train_images shape: ', train_images.shape)
-            print('train_labels shape: ', train_labels.shape)
-            # Create the Estimator
-            behaviour_regressor = tf.estimator.Estimator(
-                model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
-            tensors_to_log = {"result":"result"}
-            logging_hook = tf.train.LoggingTensorHook(
-                     tensors_to_log, every_n_iter=50)
-            # Train the model
-            train_input_fn = tf.estimator.inputs.numpy_input_fn(
-                x={"x": train_images},
-                y=train_labels,
-                batch_size=20,
-                num_epochs=50,
-                shuffle=True)
-            behaviour_regressor.train(
-                input_fn=train_input_fn,
-                steps=1500
-                 # ,hooks=[logging_hook]
-                )
+    print('train_images shape: ', train_images.shape)
+    print('train_labels shape: ', train_labels.shape)
+    # Create the Estimator
+    behaviour_regressor = tf.estimator.Estimator(
+        model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
+    tensors_to_log = {"result":"result", "labels": "labels"}
+    logging_hook = tf.train.LoggingTensorHook(
+             tensors_to_log, every_n_iter=50)
+    # Train the model
+    train_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": train_images},
+        y=train_labels,
+        batch_size=40,
+        num_epochs=50,
+        shuffle=True)
+    behaviour_regressor.train(
+        input_fn=train_input_fn,
+        steps=200000
+         # ,hooks=[logging_hook]
+        )
 
-            # Evaluate the model and print results
-            eval_input_fn = tf.estimator.inputs.numpy_input_fn(
-                x={"x": test_images},
-                y=test_labels,
-                batch_size=1,
-                num_epochs=1,
-                shuffle=False)
-            eval_results = behaviour_regressor.evaluate(input_fn=eval_input_fn)
-            print(eval_results)
-            print("trained with track ", track_n, "try ", try_n)
+    # Evaluate the model and print results
+    eval_input_fn = tf.estimator.inputs.numpy_input_fn(
+        x={"x": test_images},
+        y=test_labels,
+        batch_size=1,
+        num_epochs=1,
+        shuffle=False)
+    eval_results = behaviour_regressor.evaluate(input_fn=eval_input_fn)
+    print(eval_results)
+    print("trained with track ", track_n, "try ", try_n)

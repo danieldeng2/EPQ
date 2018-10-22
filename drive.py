@@ -17,11 +17,9 @@ import matplotlib.pyplot as plt
 from model import cnn_model_fn
 sio = socketio.Server()
 app = Flask(__name__)
-model = None
-prev_image_array = None
 
-MAX_SPEED = 30.19
-MIN_SPEED = 10
+MAX_SPEED = 1
+MIN_SPEED = 0.01
 
 speed_limit = MAX_SPEED
 
@@ -29,6 +27,8 @@ speed_limit = MAX_SPEED
 @sio.on('telemetry')
 def telemetry(sid, data):
     if data:
+        speed = float(data["speed"])
+        throttle = float(data["throttle"])
         speed = float(data["speed"])
         image = Image.open(BytesIO(base64.b64decode(data["image"]))).convert('RGB')
 
@@ -47,13 +47,12 @@ def telemetry(sid, data):
                 batch_size=1,
                 shuffle=False)
             result = behaviour_regressor.predict(input_fn=predict_input_fn)
-            print(next(result))
             steering_angle = next(result)
 
             global speed_limit
             speed_limit = MIN_SPEED if speed > speed_limit else MAX_SPEED
 
-            throttle = 1.0 - steering_angle**2 - (speed/speed_limit)**2
+            throttle = 1.0 - steering_angle**2 - abs(speed-MIN_SPEED)**2
 
             print('{} {} {}'.format(steering_angle, throttle, speed))
             send_control(steering_angle, throttle)
