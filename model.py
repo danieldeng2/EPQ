@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 tf.logging.set_verbosity(tf.logging.INFO)
 def cnn_model_fn(features, labels, mode):
-    input_layer = tf.reshape(tf.cast(features["x"], tf.float32), [-1, 66, 200, 3])
+    input_layer = tf.reshape(tf.cast(features["x"], tf.float32)/127.5-1.0, [-1, 66, 200, 3])
     # Convolutional Layer #1 & Pooling Layer #1
     conv1 = tf.layers.conv2d(
         inputs=input_layer,
@@ -63,6 +63,11 @@ def cnn_model_fn(features, labels, mode):
     tf.identity(labels, name="labels")
     loss = tf.losses.mean_squared_error(labels=labels,predictions=result)
 
+
+    tf.summary.scalar("loss",loss)
+    tf.summary.image("input_layer",input_layer,max_outputs=5)
+
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
         train_op = optimizer.minimize(
@@ -79,6 +84,7 @@ def cnn_model_fn(features, labels, mode):
 if __name__ == '__main__':
     image_data = []
     steering_data = []
+
     for track_n in range(1, 2):
         for try_n in range(1, 6):
             #Read the images and load the data.
@@ -95,10 +101,8 @@ if __name__ == '__main__':
     steering = np.reshape(steering_data, (-1, 1))
     train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data),np.array(steering, dtype=np.float32), test_size=0.2, random_state=0)
 
-    for i in range(1,len(train_images)):
-        train_images[i] = train_images[i]/127.5-1.0
-    for i in range(1,len(test_images)):
-        test_images[i] = test_images[i]/127.5-1.0
+    print(driving_sample.describe())
+    plt.show()
 
     print('train_images shape: ', train_images.shape)
     print('train_labels shape: ', train_labels.shape)
@@ -130,4 +134,3 @@ if __name__ == '__main__':
         shuffle=False)
     eval_results = behaviour_regressor.evaluate(input_fn=eval_input_fn)
     print(eval_results)
-    print("trained with track ", track_n, "try ", try_n)
