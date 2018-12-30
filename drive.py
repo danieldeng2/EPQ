@@ -37,7 +37,6 @@ def telemetry(sid, data):
             image = image[:, :, ::-1].copy()
             image = cv2.resize(cv2.cvtColor(image[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA)
             image = np.array([image])
-            image = image/127.5-1.0
             # print(image.shape)
             # plt.imshow(image[0])
             # plt.show()
@@ -47,15 +46,15 @@ def telemetry(sid, data):
                 batch_size=1,
                 shuffle=False)
             result = behaviour_regressor.predict(input_fn=predict_input_fn)
-            steering_angle = next(result)
+            steering_angle = next(result)[0]
 
             global speed_limit
             speed_limit = MIN_SPEED if speed > speed_limit else MAX_SPEED
 
-            throttle = 1.0 - steering_angle**2 - abs(speed-MIN_SPEED)**2
+            throttle = 1.0 - steering_angle**2 - (speed/speed_limit)**2
 
             print('{} {} {}'.format(steering_angle, throttle, speed))
-            send_control(steering_angle, throttle)
+            send_control(steering_angle, 0.1)
         except Exception as e:
             print(e)
     else:
@@ -77,7 +76,7 @@ def send_control(steering_angle, throttle):
 if __name__ == '__main__':
 
     behaviour_regressor = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
+        model_fn=cnn_model_fn, model_dir="./Behaviour-cloning-model")
 
     app = socketio.Middleware(sio, app)
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)

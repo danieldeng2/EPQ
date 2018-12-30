@@ -49,7 +49,7 @@ def cnn_model_fn(features, labels, mode):
         kernel_size=[3, 3],
         padding="same",
         activation=tf.nn.elu)
-    dropout = tf.layers.dropout(inputs=conv5, rate=0.0, training=mode == tf.estimator.ModeKeys.TRAIN)
+    dropout = tf.layers.dropout(inputs=conv5, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
     dropout_flat = tf.contrib.layers.flatten(dropout)
     dense1 = tf.layers.dense(inputs=dropout_flat, units=500, activation=tf.nn.elu)
     dense2 = tf.layers.dense(inputs=dense1, units=50, activation=tf.nn.elu)
@@ -66,10 +66,18 @@ def cnn_model_fn(features, labels, mode):
 
     tf.summary.scalar("loss",loss)
     tf.summary.image("input_layer",input_layer,max_outputs=5)
+    W_d = tf.reshape(conv1, [-1,62,196,3])
+    tf.summary.image("conv1", W_d, max_outputs=5)
+    W_d = tf.reshape(conv2, [-1,27,94,3])
+    tf.summary.image("conv2", W_d, max_outputs=5)
+    W_d = tf.reshape(conv3, [-1,9,43,3])
+    tf.summary.image("conv3", W_d, max_outputs=5)
+    W_d = tf.reshape(conv4, [-1,19,32,4])
+    tf.summary.image("conv4", W_d, max_outputs=5)
 
 
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.00001)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
@@ -88,27 +96,23 @@ if __name__ == '__main__':
     for track_n in range(1, 2):
         for try_n in range(1, 6):
             #Read the images and load the data.
-            file_dir = "/home/daniel/Projects/sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
+            file_dir = "../sdving/track" + str(track_n) + "/try" + str(try_n) + "/driving_log.csv"
             print("file_dir: " + file_dir)
             driving_sample = pd.read_csv(file_dir, sep="," , names = ['Center', 'Left', 'Right', 'Steering', 'Throttle', 'Break', 'Speed'])
             print(driving_sample.describe())
 
             for index, row in driving_sample.iterrows():
                 image_data.append(cv2.resize(cv2.cvtColor(cv2.imread(row["Center"])[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA))
-                #image_data.append(cv2.resize(cv2.cvtColor(cv2.flip( cv2.imread(row["Center"]), 0)[60:-25, :, :], cv2.COLOR_RGB2YUV),(200, 66),cv2.INTER_AREA)) #flipped image
                 steering_data.append(row["Steering"])
             print('image_data shape:', np.array(image_data).shape)
     steering = np.reshape(steering_data, (-1, 1))
     train_images, test_images, train_labels, test_labels = train_test_split(np.array(image_data),np.array(steering, dtype=np.float32), test_size=0.2, random_state=0)
 
-    print(driving_sample.describe())
-    plt.show()
-
     print('train_images shape: ', train_images.shape)
     print('train_labels shape: ', train_labels.shape)
     # Create the Estimator
     behaviour_regressor = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir="/home/daniel/Projects/EPQ/Behaviour-cloning-model")
+        model_fn=cnn_model_fn, model_dir="./Behaviour-cloning-model")
     tensors_to_log = {"result":"result", "labels": "labels"}
     logging_hook = tf.train.LoggingTensorHook(
              tensors_to_log, every_n_iter=50)
@@ -122,7 +126,7 @@ if __name__ == '__main__':
     behaviour_regressor.train(
         input_fn=train_input_fn,
         steps=200000
-         # ,hooks=[logging_hook]
+        ,hooks=[logging_hook]
         )
 
     # Evaluate the model and print results
